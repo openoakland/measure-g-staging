@@ -1,0 +1,759 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+                <title>
+            Measure G - By Location
+        </title>
+
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+        <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+        <!-- used for social icons -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+        <script src="https://code.jquery.com/jquery-2.1.4.min.js" type="text/javascript"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+        <link rel="stylesheet" href="http://libs.cartocdn.com/cartodb.js/v3/themes/css/cartodb.css" type="text/css" />
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+
+        <script src="http://libs.cartocdn.com/cartodb.js/v3/cartodb.uncompressed.js" type="text/javascript"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js" type="text/javascript"></script>
+        <script src="http://code.jquery.com/ui/1.11.3/jquery-ui.min.js" type="text/javascript"></script>
+
+        <script type="infowindow/html" id="infowindow_template_school">
+          <div class="infowindow cartodb-popup v2">
+            <a href="#close" class="cartodb-popup-close-button close">x</a>
+             <div class="cartodb-popup-content-wrapper">
+               <div class="cartodb-popup-content">
+                <div class="school-name">{{content.data.schnam}}</div>
+                <div class="info-row">
+                    <span class="spending-label">total spending</span>
+                    <span class="spending highlight">{{content.data.ytd_money}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="spending-label">per student</span>
+                    <span class="spending">{{content.data.per_student_money}}</span>
+                </div>
+               </div>
+             </div>
+             <div class="cartodb-popup-tip-container"></div>
+          </div>
+        </script>
+
+        <script type="infowindow/html" id="infowindow_template_student">
+          <div class="infowindow cartodb-popup v2">
+            <a href="#close" class="cartodb-popup-close-button close">x</a>
+             <div class="cartodb-popup-content-wrapper">
+               <div class="cartodb-popup-content">
+                <div class="school-name">{{content.data.schnam}}</div>
+                <div class="info-row">
+                    <span class="spending-label">total spending</span>
+                    <span class="spending">{{content.data.ytd_money}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="spending-label">per student</span>
+                    <span class="spending highlight">{{content.data.per_student_money}}</span>
+                </div>
+               </div>
+             </div>
+             <div class="cartodb-popup-tip-container"></div>
+          </div>
+        </script>
+
+        <style type="text/css">
+            .cartodb-popup-content-wrapper,
+            .cartodb-popup-content {
+                box-sizing: content-box;
+                -webkit-box-sizing: content-box;
+                -moz-box-sizing: content-box;
+            }
+            html, body, #map {
+                height: 100%;
+                padding: 0;
+                margin: 0;
+
+                background-color:#fff;
+                text-rendering:optimizeLegibility;
+                -webkit-text-rendering:optimizeLegibility;
+                -webkit-font-smoothing:antialiased;
+                color:#333;
+                font-weight:300;
+                line-height:25px;
+                font-family:"Proxima Nova W01","Helvetica Neue",Helvetica,Arial,sans-serif
+            }
+
+            /* Wrapper for page content to push down footer */
+            #wrap {
+              min-height: 100%;
+              height: 100%;
+            }
+
+            #wrap > .center-container {
+              padding: 50px 0 0 0;
+              margin:0;
+            }
+
+            .center-container, .center-row {
+              height:100%;
+            }
+
+            /*Menu Headers*/
+
+            span.menu-icon {
+                float: right;
+            }
+
+            #menu-heading {
+                cursor: pointer;
+                font-size:20px;
+                padding: 8px 15px;
+            }
+            .section-header {
+                text-transform: uppercase;
+                font-size: 13px;
+                padding-left: 30px;
+                color: rgba(51, 51, 51, 0.7);
+            }
+
+            /* Nav Social Links */
+            ul.social a.twitter:hover {
+                color: #00aced;
+            }
+
+            ul.social a.facebook:hover {
+                color: #3b5998;
+            }
+
+            /* Year Selection */
+
+            #year-select {
+                height: 50px;
+                position: absolute;
+                bottom: 30px;
+                left: 50px;
+                text-align: justify;
+                -ms-text-justify: distribute-all-lines;
+                text-justify: distribute-all-lines;
+                background: rgba(255,255,255,0.9);
+                border-radius: 5px;
+                padding: 10px;
+                border: 1px solid #999;
+            }
+
+            #year-select .year {
+                display: inline-block;
+                vertical-align: middle;
+                *display: inline;
+                zoom: 1;
+                padding: 3px;
+                cursor: pointer;
+            }
+
+            #year-select .year.selected {
+                background-color: rgba(0,0,0,.67);
+                color: white;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+
+            #year-select .stretch {
+                width: 100%;
+                display: inline-block;
+                font-size: 0;
+                line-height: 0
+            }
+
+            /* Loading Graphic */
+            #loading {
+                height: 50px;
+                background: rgba(255,255,255,0.9);
+                border-radius: 5px;
+                padding: 10px;
+                position: absolute;
+                top: 46%;
+                left: 46%;
+                border: 1px solid #999;
+            }
+
+            /*Menu Filter Icons*/
+
+            #spending-menu, #program-menu, #school-level-menu, #menu-heading.expanded {
+                border-bottom: 1px solid #999;
+            }
+
+            #spending-menu, #program-menu, #school-level-menu {
+                padding-bottom: 5px;
+                padding-top: 5px;
+            }
+
+            #spending-menu .buttons {
+                display: inline-block;
+                padding-left: 15px;
+            }
+
+            .filter-label {
+                padding-left: 5px;
+                vertical-align: middle;
+            }
+
+            /* school levels */
+
+            label {
+                margin: 0;
+                font-weight: inherit;
+                display: inherit;
+            }
+
+            #menu {
+                position: absolute;
+                top: 70px;
+                right: 20px;
+            }
+            .layer_selector {
+                background: rgba(255,255,255,0.9);
+                border-radius: 5px;
+                padding: 0;
+                border: 1px solid #999;
+            }
+
+            .layer_selector ul {
+                padding: 0; margin: 0;
+                list-style-type: none;
+            }
+            .layer_selector li {
+                padding: 3px 30px;
+                font-family: Helvetica, Arial;
+                font-size: 15px;
+                color: #444;
+                cursor: pointer;
+                height: 100%;
+            }
+
+            .layer_selector li:hover {
+                background-color: #A6CEE3;
+                cursor: pointer;
+            }
+
+            /* Infowindows */
+            .infowindow .school-name, .cartodb-tooltip .school-name {
+                font-weight: bold;
+            }
+
+            .info-row {
+                width: 80%;
+            }
+
+            .info-row .spending-label {
+                color: black;
+                float: left;
+                font-style: italic;
+            }
+            .info-row .spending {
+                font-weight: bold;
+                float: right;
+            }
+
+            .info-row .spending.highlight {
+                font-size: 12pt;
+                color: green;
+            }
+
+            .cartodb-tooltip {
+                max-width: 1000px !important;
+            }
+
+            .cartodb-tooltip div.cartodb-popup.v2 div.cartodb-popup-content {
+                max-width: 190px;
+            }
+
+            /* Reusing cartodb infowindow classes for tooltip. this hides the carrot/arrow thing */
+            .cartodb-tooltip div.cartodb-popup.v2:before {
+                display: none;
+            }
+
+            .more-info {
+                padding-left: 5px;
+                font-size: 10pt;
+            }
+            </style>
+
+        <style type="cartocss/html" id="school-bubble">
+            /** bubble visualization */
+
+            #measure_g_2012_13_merge{
+              marker-fill-opacity: 0.9;
+              marker-line-color: #FFF;
+              marker-line-width: 1.5;
+              marker-line-opacity: 1;
+              marker-placement: point;
+              marker-multi-policy: largest;
+              marker-type: ellipse;
+              marker-fill: #229A00;
+              marker-allow-overlap: true;
+              marker-clip: false;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 10] {
+               marker-width: 25.0;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 9] {
+               marker-width: 23.3;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 8] {
+               marker-width: 21.7;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 7] {
+               marker-width: 20.0;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 6] {
+               marker-width: 18.3;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 5] {
+               marker-width: 16.7;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 4] {
+               marker-width: 15.0;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 3] {
+               marker-width: 13.3;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 2] {
+               marker-width: 11.7;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 1] {
+               marker-width: 10.0;
+            }
+        </style>
+
+        <style type="cartocss/html" id="per-student-bubble">
+            /** bubble visualization */
+
+            #measure_g_2012_13_merge{
+              marker-fill-opacity: 0.9;
+              marker-line-color: #FFF;
+              marker-line-width: 1.5;
+              marker-line-opacity: 1;
+              marker-placement: point;
+              marker-multi-policy: largest;
+              marker-type: ellipse;
+              marker-fill: #229A00;
+              marker-allow-overlap: true;
+              marker-clip: false;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 10] {
+               marker-width: 25.0;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 9] {
+               marker-width: 23.3;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 8] {
+               marker-width: 21.7;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 7] {
+               marker-width: 20.0;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 6] {
+               marker-width: 18.3;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 5] {
+               marker-width: 16.7;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 4] {
+               marker-width: 15.0;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 3] {
+               marker-width: 13.3;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 2] {
+               marker-width: 11.7;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 1] {
+               marker-width: 10.0;
+            }
+        </style>
+
+        <!--Google analytics snippet -->
+          <script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+            ga('create', 'UA-35908939-11', 'auto');
+            ga('send', 'pageview');
+
+          </script>
+    </head>
+    <body>
+
+        <!-- Wrap all page content here -->
+        <div id="wrap">
+
+                        <!-- Fixed navbar -->
+            <div class="navbar navbar-default navbar-fixed-top">
+                <div class="container">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse-target" aria-expanded="false">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="index"><strong>Track G - Oakland's Measure G</strong></a>
+                    </div>
+                    <div class="collapse navbar-collapse" id="navbar-collapse-target">
+                        <ul class="nav navbar-nav">
+                            <li class=""><a href="index">About</a></li>
+                            <li class="active"><a href="map">By Location</a></li>
+                            <li class=""><a href="programs#art">By Program</a></li>
+                            <li class=""><a href="chart">By School</a></li>
+                            <li class=""><a href="treemap">In Summary</a></li>
+                        </ul>
+                        <ul class="nav navbar-nav navbar-right social">
+                            <li>
+                              <a class="twitter" href="https://twitter.com/intent/tweet?hashtags=OAKEDU&original_referer=https%3A%2F%2Fabout.twitter.com%2Fresources%2Fbuttons&ref_src=twsrc%5Etfw&text=Explore%20how%20Measure%20G%20funds%20are%20spent%20in%20%23Oakland%20Schools!&tw_p=tweetbutton&url=https%3A%2F%2Fabout.twitter.com%2Fresources%2Fbuttons&via=OpenOakland" target="_blank">
+                              <i class="fa fa-twitter fa-lg"></i>
+                              </a>
+                            </li>
+                            <li>
+                                <a class="facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Ftrackg.org" target="_blank" class="fbhover"><i class="fa fa-facebook fa-lg"></i></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+          <!-- Begin page content -->
+          <div class="center-container">
+
+            <div class="center-row">
+
+                <div id="map"></div>
+
+                <div class="container-fluid">
+                    <div class="row">
+                        <div id="menu" class="layer_selector col-xs-6 col-sm-3">
+                            <div id="menu-heading" class="expanded">
+                                Explore
+                                <span class="menu-icon glyphicon glyphicon-triangle-bottom" style="display: none" aria-hidden="true"></span>
+                                <span class="menu-icon glyphicon glyphicon-triangle-top" aria-hidden="true"></span>
+                            </div>
+                            <ul id="spending-menu" class="collapsible">
+                                <span class="section-header">Bubble Sizes</span>
+                                <div class="buttons">
+                                  <button type="button" data-spending="student" class="btn btn-success btn-xs">Per Student</button>
+                                  <button type="button" data-spending="school" class="btn btn-default btn-xs">Whole School</button>
+                                </div>
+                            </ul>
+                            <ul id="program-menu" class="collapsible">
+                                <span class="section-header">Programs</span>
+                                <li>
+                                    <input type="radio" id="select-all" checked="checked">
+                                    <span class="filter-label">
+                                        All Programs
+                                    </span>
+                                </li>
+                                <li>
+                                    <input type="radio" data="1118 - ART">
+                                    <span class="filter-label">
+                                        Art<a href="programs.html#art" target="_blank" class="more-info"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span></a>
+                                    </span>
+
+                                </li>
+                                <li>
+                                    <input type="radio" data="1191 - BASIC SCHOOL SUPPORT">
+                                    <span class="filter-label">
+                                        Basic School Support<a href="programs.html#basic-school-support" target="_blank" class="more-info"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span></a>
+                                    </span>
+                                </li>
+                                <li>
+                                    <input type="radio" data="1112 - CLASS SIZE REDUCTION">
+                                    <span class="filter-label">
+                                        Class Size Reduction<a href="programs.html#class-size-reduction" target="_blank" class="more-info"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"><span></a>
+                                    </span>
+                                </li>
+                                <li>
+                                    <input type="radio" data="1159 - COVERED ELEM INTERVENTION PDS">
+                                    <span class="filter-label">
+                                        Elementary Intervention<a href="programs.html#elementary-intervention" target="_blank" class="more-info"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"></a>
+                                    </span>
+                                </li>
+                                <li>
+                                    <input type="radio" data="1552 - SCHOOL LIBRARIES">
+                                    <span class="filter-label">
+                                        Libraries<a href="programs.html#libraries" target="_blank" class="more-info"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"></a>
+                                    </span>
+                                </li>
+                                <li>
+                                    <input type="radio" data="1598 - MIDDLE SCHOOL ELECTIVES">
+                                    <span class="filter-label">
+                                        Middle School Electives<a href="programs.html#middle-school-electives" target="_blank" class="more-info"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"></a>
+                                    </span>
+                                </li>
+                            </ul>
+                            <ul id="school-level-menu" class="collapsible">
+                                <span class="section-header">School Levels</span>
+                                <label for="elem">
+                                    <li>
+                                        <input type="checkbox" id="elem" data="Elem" checked="checked">
+                                        <span class="filter-label">Elementary</span>
+                                    </li>
+                                </label>
+                                <label for="middle">
+                                    <li>
+                                        <input type="checkbox" id="middle" data="Middle" checked="checked">
+                                        <span class="filter-label">Middle</span>
+                                    </li>
+                                </label>
+                                <label for="high">
+                                    <li>
+                                        <input type="checkbox" id="high" data="High" checked="checked">
+                                        <span class="filter-label">High</span>
+                                    </li>
+                                </label>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container-fluid">
+                    <div class="row">
+                        <div id="year-select">
+                            <div class="year" data-year="2012">2012-13</div>
+                            <div class="year" data-year="2013">2013-14</div>
+                            <div class="year selected" data-year="2014">2014-15</div>
+                            <span class="stretch"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container-fluid">
+                    <div class="row">
+                        <div id="loading" style="display: none;">
+                        Loading...
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+
+          </div>
+
+        </div> <!-- end wrap -->
+
+        <!-- Place your code in the script tags below -->
+        <script type="text/javascript">
+        window.onload = function() {
+
+            getSelectedPrograms = function () {
+                var programList = [];
+                var selectedOption = $('#program-menu input:checked');
+                if (selectedOption.attr('id') === "select-all") {
+                    $('#program-menu input[data]').each(function(){
+                        programList.push("'" + $(this).attr("data") + "'");
+                    });
+                } else {
+                    programList.push("'" + selectedOption.attr("data") + "'")
+                };
+
+                return programList.join();
+            };
+
+           getSelectedSchoolLevels = function () {
+                var schoolLevelList = [];
+                $('#school-level-menu input:checked').each(function(){
+                    schoolLevelList.push("'" + $(this).attr("data") + "'");
+                });
+                return schoolLevelList.join();
+            };
+
+            var getTableForSelectedYear = function () {
+
+                var yearToTable = {
+                    "2012" : "measure_g_2012_13_per_student",
+                    "2013" : "measure_g_2013_14_per_student",
+                    "2014" : "measure_g_2014_15_per_student"
+                };
+
+                var year = $( "#year-select .year.selected" ).data("year");
+
+                if (year in yearToTable) {
+                    return yearToTable[year];
+                };
+
+                return yearToTable["2014"];
+
+            };
+
+            generateSpendingSQLQuery = function () {
+
+                var query = "SELECT s.the_geom, s.the_geom_webmercator, SUM(mg.ytd_actual) as ytd_actual, SUM(ytd_actual::numeric::money)::text as ytd_money, Min(mg.cartodb_id) cartodb_id, s.schnam, s.site_type, SUM(mg.per_student) per_student, SUM(per_student::numeric::money)::text as per_student_money, "
+                    + "ntile(10) OVER (ORDER BY mg.ytd_actual) as bubble_school, "
+                    + "ntile(10) OVER (ORDER BY per_student) as bubble_student "
+                    + "FROM " + getTableForSelectedYear() + " mg, measure_g_schools_lat_long s "
+                    + "WHERE prog_desc IN ("
+                    + getSelectedPrograms()
+                    + ") "
+                    + "AND prog_desc IS NOT NULL "
+                    + "AND mg.site_type IN ("
+                    + getSelectedSchoolLevels()
+                    + ") "
+                    + "AND mg.site = s.ousd_site "
+                    + "GROUP BY s.the_geom, s.the_geom_webmercator, s.schnam, s.site_type, mg.ytd_actual, mg.per_student";
+
+                return query;
+            };
+
+            var generateSchoolsSQLQuery = function () {
+
+                var query = "SELECT * FROM measure_g_schools_lat_long "
+                + "WHERE site_type IN ("
+                + getSelectedSchoolLevels()
+                + ") ";
+
+                return query;
+            };
+
+            var showLoading = function () {
+                $('#loading').show();
+            };
+
+            var hideLoading = function () {
+                $('#loading').hide();
+            };
+
+            var layerSource = {
+                    user_name: 'jbaldo',
+                    type: 'cartodb',
+                    sublayers: [{
+                        sql: generateSpendingSQLQuery(),
+                        interactivity: "cartodb_id, the_geom, the_geom_webmercator"
+                    }]
+            }
+
+            // Instantiate new map object, place it in 'map' element
+            var map_object = new L.Map('map', {
+                center: [37.789981, -122.179298], // Oakland
+                zoom: 12
+            });
+
+            // Pull tiles from CartoDB's basemaps
+            L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map_object);
+
+            // for storing spendingLayer outside of createlayer
+            var spendingLayer, schoolsLayer;
+
+            var updateSpendingMap = function () {
+                spendingLayer.setSQL(generateSpendingSQLQuery());
+                infowindow.set('visibility', false);
+            };
+
+            var updateMapCSSForSpendingType = function (spendingType) {
+
+                if (spendingType === "student") {
+                    spendingLayer.setCartoCSS($('#per-student-bubble').html());
+                } else {
+                    spendingLayer.setCartoCSS($('#school-bubble').html());
+                }
+
+                spendingLayer.infowindow.set({
+                    template: $('#infowindow_template_' + spendingType).html()
+                });
+            }
+
+            // Add data layer to your map
+            $.getJSON('viz.jsonp', function(data) {
+                cartodb.createLayer(map_object,data)
+                    .addTo(map_object)
+                    .done(function(layer) {
+                        schoolsLayer = layer.getSubLayer(0);
+                        spendingLayer = layer.getSubLayer(1);
+
+                        infowindow = layer.infowindow;
+
+                        layer.on("loading", showLoading);
+                        layer.on("load", hideLoading);
+
+                        // Undocumented addField method here: https://github.com/CartoDB/cartodb/issues/54
+                        updateMapCSSForSpendingType("student");
+
+                        updateSpendingMap();
+
+                    })
+                    .error(function(err) {
+                        console.log("error: " + err);
+                    });
+                });
+
+            $('#school-level-menu :checkbox').click(function(){
+                updateSpendingMap();
+
+                //Schools layer only needs to be updated when you show or hide school levels
+                schoolsLayer.setSQL(generateSchoolsSQLQuery());
+            });
+
+            $('#program-menu li').click(function(){
+                $('#program-menu input:checked').prop("checked", false);
+                $(this).find("input").prop("checked", true);
+                updateSpendingMap();
+            });
+
+            $('#menu-heading').click(function(){
+                if ($(this).hasClass("expanded")) {
+                    $("ul.collapsible").slideUp();
+                } else {
+                    $("ul.collapsible").slideDown();
+                }
+                $(this).toggleClass("expanded");
+                $('span.menu-icon').toggle();
+            });
+
+            $('#year-select .year').click(function (){
+                $('#year-select .year.selected').removeClass("selected");
+                $(this).addClass("selected");
+                updateSpendingMap();
+            });
+
+            $('#spending-menu button').click(function(){
+                // Update if the button clicked isn't currently selected
+                if($(this).hasClass('btn-default')) {
+                    $('#spending-menu button').toggleClass('btn-default btn-success');
+                    var spendingType = $(this).data("spending");
+                    updateMapCSSForSpendingType(spendingType);
+                    $('.info-row .spending').toggleClass("highlight");
+                }
+            });
+
+
+            }
+        </script>
+                <!-- UserVoice JavaScript SDK (only needed once on a page) -->
+        <script>(function(){var uv=document.createElement('script');uv.type='text/javascript';uv.async=true;uv.src='//widget.uservoice.com/fE7XpxXMOWc2yipGiIhow.js';var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(uv,s)})()</script>
+
+        <!-- A tab to launch the Classic Widget -->
+        <script>
+            UserVoice = window.UserVoice || [];
+            UserVoice.push(['showTab', 'classic_widget', {
+              mode: 'full',
+              primary_color: '#558a29',
+              link_color: '#007dbf',
+              default_mode: 'feedback',
+              forum_id: 347124,
+              topic_id: 33121,
+              tab_label: 'Feedback',
+              tab_color: '#74ca32',
+              tab_position: 'middle-left',
+              tab_inverted: false
+            }]);
+        </script>
+
+    </body>
+</html>
