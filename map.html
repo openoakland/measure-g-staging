@@ -1,0 +1,559 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+                <title>
+            Measure G - By Location
+        </title>
+
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+        <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+        <!-- used for social icons -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+        <link href="style/map.css" type="text/css" rel="stylesheet">
+
+        <script src="https://code.jquery.com/jquery-2.1.4.min.js" type="text/javascript"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+        <link rel="stylesheet" href="https://libs.cartocdn.com/cartodb.js/v3/themes/css/cartodb.css" type="text/css" />
+        <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+
+        <script src="https://libs.cartocdn.com/cartodb.js/v3/3.15/cartodb.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js" type="text/javascript"></script>
+        <script src="https://code.jquery.com/ui/1.11.3/jquery-ui.min.js" type="text/javascript"></script>
+
+        <script type="infowindow/html" id="infowindow_template_school">
+          <div class="infowindow cartodb-popup v2">
+            <a href="#close" class="cartodb-popup-close-button close">x</a>
+             <div class="cartodb-popup-content-wrapper">
+               <div class="cartodb-popup-content">
+                <div class="school-name"><a href="school.html?schoolID={{content.data.ousd_site}}">{{content.data.schnam}}</a></div>
+                <div class="info-row">
+                    <span class="spending-label">total spending</span>
+                    <span class="spending highlight">{{content.data.ytd_money}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="spending-label">per student</span>
+                    <span class="spending">{{content.data.per_student_money}}</span>
+                </div>
+               </div>
+             </div>
+             <div class="cartodb-popup-tip-container"></div>
+          </div>
+        </script>
+
+        <script type="infowindow/html" id="infowindow_template_student">
+          <div class="infowindow cartodb-popup v2">
+            <a href="#close" class="cartodb-popup-close-button close">x</a>
+             <div class="cartodb-popup-content-wrapper">
+               <div class="cartodb-popup-content">
+                <div class="school-name"><a href="school.html?schoolID={{content.data.ousd_site}}">{{content.data.schnam}}</a></div>
+                <div class="info-row">
+                    <span class="spending-label">total spending</span>
+                    <span class="spending">{{content.data.ytd_money}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="spending-label">per student</span>
+                    <span class="spending highlight">{{content.data.per_student_money}}</span>
+                </div>
+               </div>
+             </div>
+             <div class="cartodb-popup-tip-container"></div>
+          </div>
+        </script>
+
+        <style type="cartocss/html" id="school-bubble">
+            /** bubble visualization */
+
+            #measure_g_2012_13_merge{
+              marker-fill-opacity: 0.9;
+              marker-line-color: #FFF;
+              marker-line-width: 1.5;
+              marker-line-opacity: 1;
+              marker-placement: point;
+              marker-multi-policy: largest;
+              marker-type: ellipse;
+              marker-fill: #229A00;
+              marker-allow-overlap: true;
+              marker-clip: false;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 10] {
+               marker-width: 25.0;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 9] {
+               marker-width: 23.3;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 8] {
+               marker-width: 21.7;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 7] {
+               marker-width: 20.0;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 6] {
+               marker-width: 18.3;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 5] {
+               marker-width: 16.7;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 4] {
+               marker-width: 15.0;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 3] {
+               marker-width: 13.3;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 2] {
+               marker-width: 11.7;
+            }
+            #measure_g_2012_13_merge [ bubble_school <= 1] {
+               marker-width: 10.0;
+            }
+        </style>
+
+        <style type="cartocss/html" id="per-student-bubble">
+            /** bubble visualization */
+
+            #measure_g_2012_13_merge{
+              marker-fill-opacity: 0.9;
+              marker-line-color: #FFF;
+              marker-line-width: 1.5;
+              marker-line-opacity: 1;
+              marker-placement: point;
+              marker-multi-policy: largest;
+              marker-type: ellipse;
+              marker-fill: #229A00;
+              marker-allow-overlap: true;
+              marker-clip: false;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 10] {
+               marker-width: 25.0;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 9] {
+               marker-width: 23.3;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 8] {
+               marker-width: 21.7;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 7] {
+               marker-width: 20.0;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 6] {
+               marker-width: 18.3;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 5] {
+               marker-width: 16.7;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 4] {
+               marker-width: 15.0;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 3] {
+               marker-width: 13.3;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 2] {
+               marker-width: 11.7;
+            }
+            #measure_g_2012_13_merge [ bubble_student <= 1] {
+               marker-width: 10.0;
+            }
+        </style>
+
+        <!--Google analytics snippet -->
+          <script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+            ga('create', 'UA-35908939-11', 'auto');
+            ga('send', 'pageview');
+
+          </script>
+    </head>
+    <body>
+
+        <!-- Wrap all page content here -->
+        <div id="wrap">
+
+                        <!-- Fixed navbar -->
+            <div class="navbar navbar-default navbar-fixed-top">
+                <div class="container">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse-target" aria-expanded="false">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="index.html"><strong>Track G - Oakland's Measure G</strong></a>
+                    </div>
+                    <div class="collapse navbar-collapse" id="navbar-collapse-target">
+                        <ul class="nav navbar-nav">
+                            <li class=""><a href="index.html">About</a></li>
+                            <li class="active"><a href="map.html">By Location</a></li>
+                            <li class=""><a href="programs.html#">By Program</a></li>
+                            <li class=""><a href="chart.html">By School</a></li>
+                        </ul>
+                        <ul class="nav navbar-nav navbar-right social">
+                            <li>
+                              <a class="twitter" href="https://twitter.com/intent/tweet?hashtags=OAKEDU&original_referer=trackg.org&ref_src=twsrc%5Etfw&text=Explore%20how%20Measure%20G%20funds%20are%20spent%20in%20%23Oakland%20Schools%20at%20trackg.org!&tw_p=tweetbutton&url=&via=OpenOakland" target="_blank">
+                              <i class="fa fa-twitter fa-lg"></i>
+                              </a>
+                            </li>
+                            <li>
+                                <a class="facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Ftrackg.org" target="_blank" class="fbhover"><i class="fa fa-facebook fa-lg"></i></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+          <!-- Begin page content -->
+          <div class="center-container">
+
+            <div class="center-row">
+
+                <div id="map"></div>
+
+                <div class="container-fluid">
+                    <div class="row">
+                        <div id="menu" class="layer_selector col-xs-6 col-sm-3">
+                            <div id="menu-heading" class="expanded">
+                                Explore
+                                <span class="menu-icon glyphicon glyphicon-triangle-bottom" style="display: none" aria-hidden="true"></span>
+                                <span class="menu-icon glyphicon glyphicon-triangle-top" aria-hidden="true"></span>
+                            </div>
+                            <ul id="spending-menu" class="collapsible">
+                                <span class="section-header">Bubble Sizes</span>
+                                <div class="buttons">
+                                  <button type="button" data-spending="student" class="btn btn-success btn-xs">Per Student</button>
+                                  <button type="button" data-spending="school" class="btn btn-default btn-xs">Whole School</button>
+                                </div>
+                            </ul>
+                            <ul id="program-menu" class="collapsible">
+                                <span class="section-header">Programs</span>
+                                <li>
+                                    <input type="radio" id="select-all" checked="checked">
+                                    <span class="filter-label">
+                                        All Programs
+                                    </span>
+                                </li>
+                                <li>
+                                    <input type="radio" data="1118">
+                                    <span class="filter-label">
+                                        Art<a href="programs.html#art" target="_blank" class="more-info"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span></a>
+                                    </span>
+
+                                </li>
+                                <li>
+                                    <input type="radio" data="1191">
+                                    <span class="filter-label">
+                                        Basic School Support<a href="programs.html#basic-school-support" target="_blank" class="more-info"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span></a>
+                                    </span>
+                                </li>
+                                <li>
+                                    <input type="radio" data="1112">
+                                    <span class="filter-label">
+                                        Class Size Reduction<a href="programs.html#class-size-reduction" target="_blank" class="more-info"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"><span></a>
+                                    </span>
+                                </li>
+                                <li>
+                                    <input type="radio" data="1159">
+                                    <span class="filter-label">
+                                        Elementary Intervention<a href="programs.html#elementary-intervention" target="_blank" class="more-info"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"></a>
+                                    </span>
+                                </li>
+                                <li>
+                                    <input type="radio" data="1552">
+                                    <span class="filter-label">
+                                        Libraries<a href="programs.html#libraries" target="_blank" class="more-info"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"></a>
+                                    </span>
+                                </li>
+                                <li>
+                                    <input type="radio" data="1598">
+                                    <span class="filter-label">
+                                        Middle School Electives<a href="programs.html#middle-school-electives" target="_blank" class="more-info"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"></a>
+                                    </span>
+                                </li>
+                            </ul>
+                            <ul id="school-level-menu" class="collapsible">
+                                <span class="section-header">School Levels</span>
+                                <label for="elem">
+                                    <li>
+                                        <input type="checkbox" id="elem" data="Elem" checked="checked">
+                                        <span class="filter-label">Elementary</span>
+                                    </li>
+                                </label>
+                                <label for="middle">
+                                    <li>
+                                        <input type="checkbox" id="middle" data="Middle" checked="checked">
+                                        <span class="filter-label">Middle</span>
+                                    </li>
+                                </label>
+                                <label for="high">
+                                    <li>
+                                        <input type="checkbox" id="high" data="High" checked="checked">
+                                        <span class="filter-label">High</span>
+                                    </li>
+                                </label>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container-fluid">
+                    <div class="row">
+                        <div id="year-select">
+                            <div class="year" data-year="2012">2012-13</div>
+                            <div class="year" data-year="2013">2013-14</div>
+                            <div class="year" data-year="2014">2014-15</div>
+                            <div class="year" data-year="2015">2015-16</div>
+                            <div class="year" data-year="2016">2016-17</div>
+                            <div class="year selected" data-year="2017">2017-18</div>
+                            <span class="stretch"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container-fluid">
+                    <div class="row">
+                        <div id="loading" style="display: none;">
+                        Loading...
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+
+          </div>
+
+        </div> <!-- end wrap -->
+
+        <!-- Place your code in the script tags below -->
+        <script type="text/javascript">
+        window.onload = function() {
+
+            // this is a global variable in _harp.json
+            var latestEnrollmentYear = 2017;
+
+            getSelectedPrograms = function () {
+                var programList = [];
+                var selectedOption = $('#program-menu input:checked');
+                if (selectedOption.attr('id') === "select-all") {
+                    $('#program-menu input[data]').each(function(){
+                        programList.push("'" + $(this).attr("data") + "'");
+                    });
+                } else {
+                    programList.push("'" + selectedOption.attr("data") + "'")
+                };
+
+                return programList.join();
+            };
+
+           getSelectedSchoolLevels = function () {
+                var schoolLevelList = [];
+                $('#school-level-menu input:checked').each(function(){
+                    schoolLevelList.push("'" + $(this).attr("data") + "'");
+                });
+                return schoolLevelList.join();
+            };
+
+            var getSelectedYear = function () {
+
+                var year = $( "#year-select .year.selected" ).data("year");
+
+                return parseInt(year);
+
+            };
+
+            var getEnrollmentYear = function () {
+
+                var year = getSelectedYear();
+
+                if(year > latestEnrollmentYear)
+                  year = latestEnrollmentYear;
+
+                return parseInt(year);
+
+            };
+
+            generateSpendingSQLQuery = function () {
+
+                var query = "SELECT spend.*, " +
+                    "round((spend.ytd_actual / e.total_enrollment)::numeric, 2) as per_student, " +
+                    "to_char(round((spend.ytd_actual / e.total_enrollment)::numeric, 2),'$999,999.99') per_student_money, " +
+                    "ntile(10) OVER (ORDER BY spend.ytd_actual) as bubble_school, " +
+                    "ntile(10) OVER (ORDER BY (spend.ytd_actual / e.total_enrollment)) as bubble_student " +
+                    "FROM (SELECT s.the_geom, " +
+                    "s.the_geom_webmercator, " +
+                    "SUM(mg.ytd_actual) as ytd_actual, " +
+                    "SUM(mg.ytd_actual::numeric::money)::text as ytd_money, " +
+                    "MAX(mg.cartodb_id) cartodb_id, " +
+                    "s.schnam, " +
+                    "s.site_type, " +
+                    "s.ncessch, " +
+                    "s.ousd_site " +
+                    "FROM measure_g_actuals mg, measure_g_schools_lat_long s " +
+                    "WHERE mg.program_id IN (" + getSelectedPrograms() + ") " +
+                    "AND s.site_type IN ("+ getSelectedSchoolLevels() +") " +
+                    "AND mg.site = s.ousd_site " +
+                    "AND mg.year = " + getSelectedYear() + " " +
+                    "GROUP BY s.the_geom, s.the_geom_webmercator, s.schnam, s.site_type, s.ousd_site, s.ncessch) spend, ousd_enrollment_2017 e " +
+                    "WHERE spend.ncessch = e.ncessch " +
+                    "AND e.year = " + getEnrollmentYear();
+
+                return query;
+            };
+
+            var generateSchoolsSQLQuery = function () {
+
+                var query = "SELECT * FROM measure_g_schools_lat_long "
+                + "WHERE site_type IN ("
+                + getSelectedSchoolLevels()
+                + ") ";
+
+                return query;
+            };
+
+            var showLoading = function () {
+                $('#loading').show();
+            };
+
+            var hideLoading = function () {
+                $('#loading').hide();
+            };
+
+            var layerSource = {
+                    user_name: 'jbaldo',
+                    type: 'cartodb',
+                    sublayers: [{
+                        sql: generateSpendingSQLQuery(),
+                        interactivity: "cartodb_id, the_geom, the_geom_webmercator"
+                    }]
+            }
+
+            // Instantiate new map object, place it in 'map' element
+            var map_object = new L.Map('map', {
+                center: [37.789981, -122.179298], // Oakland
+                zoom: 12
+            });
+
+            // Pull tiles from CartoDB's basemaps
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map_object);
+
+            // for storing spendingLayer outside of createlayer
+            var spendingLayer, schoolsLayer;
+
+            var updateSpendingMap = function () {
+                spendingLayer.setSQL(generateSpendingSQLQuery());
+                infowindow.set('visibility', false);
+            };
+
+            var updateMapCSSForSpendingType = function (spendingType) {
+
+                if (spendingType === "student") {
+                    spendingLayer.setCartoCSS($('#per-student-bubble').html());
+                } else {
+                    spendingLayer.setCartoCSS($('#school-bubble').html());
+                }
+
+                spendingLayer.infowindow.set({
+                    template: $('#infowindow_template_' + spendingType).html()
+                });
+            }
+
+            // Add data layer to your map
+            $.getJSON('viz.jsonp', function(data) {
+                cartodb.createLayer(map_object,data)
+                    .addTo(map_object)
+                    .done(function(layer) {
+                        schoolsLayer = layer.getSubLayer(0);
+                        spendingLayer = layer.getSubLayer(1);
+
+                        infowindow = layer.infowindow;
+
+                        layer.on("loading", showLoading);
+                        layer.on("load", hideLoading);
+
+                        // Undocumented addField method here: https://github.com/CartoDB/cartodb/issues/54
+                        updateMapCSSForSpendingType("student");
+
+                        updateSpendingMap();
+
+                    })
+                    .error(function(err) {
+                        console.log("error: " + err);
+                    });
+                });
+
+            $('#school-level-menu :checkbox').click(function(){
+                updateSpendingMap();
+
+                //Schools layer only needs to be updated when you show or hide school levels
+                schoolsLayer.setSQL(generateSchoolsSQLQuery());
+            });
+
+            $('#program-menu li').click(function(){
+                $('#program-menu input:checked').prop("checked", false);
+                $(this).find("input").prop("checked", true);
+                updateSpendingMap();
+            });
+
+            $('#menu-heading').click(function(){
+                if ($(this).hasClass("expanded")) {
+                    $("ul.collapsible").slideUp();
+                } else {
+                    $("ul.collapsible").slideDown();
+                }
+                $(this).toggleClass("expanded");
+                $('span.menu-icon').toggle();
+            });
+
+            $('#year-select .year').click(function (){
+                $('#year-select .year.selected').removeClass("selected");
+                $(this).addClass("selected");
+                updateSpendingMap();
+            });
+
+            $('#spending-menu button').click(function(){
+                // Update if the button clicked isn't currently selected
+                if($(this).hasClass('btn-default')) {
+                    $('#spending-menu button').toggleClass('btn-default btn-success');
+                    var spendingType = $(this).data("spending");
+                    updateMapCSSForSpendingType(spendingType);
+                    $('.info-row .spending').toggleClass("highlight");
+                }
+            });
+
+
+            }
+        </script>
+                <!-- UserVoice JavaScript SDK (only needed once on a page) -->
+        <script>(function(){var uv=document.createElement('script');uv.type='text/javascript';uv.async=true;uv.src='//widget.uservoice.com/fE7XpxXMOWc2yipGiIhow.js';var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(uv,s)})()</script>
+
+        <!-- A tab to launch the Classic Widget -->
+        <script>
+            UserVoice = window.UserVoice || [];
+            UserVoice.push(['showTab', 'classic_widget', {
+              mode: 'full',
+              primary_color: '#558a29',
+              link_color: '#007dbf',
+              default_mode: 'feedback',
+              forum_id: 347124,
+              topic_id: 33121,
+              tab_label: 'Feedback',
+              tab_color: '#74ca32',
+              tab_position: 'middle-left',
+              tab_inverted: false
+            }]);
+        </script>
+
+    </body>
+</html>

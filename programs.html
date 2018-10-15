@@ -1,0 +1,504 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+                <title>
+            Measure G - By Program
+        </title>
+
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+        <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+        <!-- used for social icons -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+        <link href="style/programs.css" type="text/css" rel="stylesheet">
+
+        <script src="https://code.jquery.com/jquery-2.1.4.min.js" type="text/javascript"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+        <!--Load the AJAX API. Do this only once per web page! -->
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+        <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+        <script type="text/javascript">
+            google.charts.load('current', {'packages':['bar','corechart','line']});
+
+            $(document).ready(function () {
+
+                var programTotalsJson = [];
+                var programs_chart;
+                var programTotalData;
+                var spendingOverTimeData;
+
+                function updateSpendingOverTimeChart(programName) {
+                    var dataTable = google.visualization.arrayToDataTable(spendingOverTimeData[programName]);
+                    dataTable.sort([{column: 0, desc:false}]);
+
+                    var options = {
+                        legend: {position: 'none'},
+                        height: 300,
+                        width: $(window).width() * .5,
+                        vAxis:{
+                            format: '$#,###',
+                            textStyle: {
+                                fontSize: 14
+                            }
+                        },
+                        hAxis: {
+                            textStyle: {
+                                fontSize: 14
+                            }
+                        }
+                    };
+
+                    var chart = new google.charts.Line(document.getElementById('spending_over_time'));
+                    chart.draw(dataTable,google.charts.Line.convertOptions(options));
+                };
+
+                function updateObjectBarChart(programName) {
+                    var dataWithHeaders = programSpecificData[programName];
+
+                    var numBars = dataWithHeaders.length - 1;
+                    var chartHeight = numBars * 70;
+                    var sortColumn = dataWithHeaders[0].length - 1;
+
+                    var data = google.visualization.arrayToDataTable(dataWithHeaders);
+
+                    data.sort([{column: sortColumn, desc:true}]);
+
+                    var chart = new google.charts.Bar(document.getElementById('object_chart'));
+
+                    google.visualization.events.addListener(chart, 'ready', function() {
+                        document.body.scrollTop = document.documentElement.scrollTop = 0;
+                    });
+
+                    var options = {
+                        chart: {
+                        },
+                        bars: 'horizontal', // Required for Material Bar Charts.
+                        height: chartHeight,
+                        width: $(window).width() * .8,
+                        axes: {
+                            x: {
+                              0: { side: 'top', label: 'Amount spent'} // Top x-axis.
+                            }
+                        },
+                        hAxis:{ format: '$#,###'}
+                    };
+
+                    chart.draw(data, google.charts.Bar.convertOptions(options));
+                };
+
+                function openProgramTab(programName) {
+                    if (spendingOverTimeData) {
+                        updateSpendingOverTimeChart(programName);
+                    }
+
+                    updateObjectBarChart(programName);
+
+                    $('.all-programs-data').removeClass('is-active');
+                    $('#objects-tab').text(programName);
+                    var programKey = _.findKey(supportedPrograms, function(val){return val == programName});
+                    window.location.hash = programKey;
+                    $('#objects-tab').data('program-key',programKey);
+                    $('#description div').hide();
+                    $('#'+programKey).show();
+
+                    $('.object-level-data').addClass('is-active');
+                    $('#objects-tab, .object-level-data').show();
+
+                    $('#objects-tab').click();
+                }
+
+                function drawChart() {
+
+                    programTotalData = google.visualization.arrayToDataTable(dataByProgram);
+
+                    var options = {
+                        legend: {
+                            position: 'left'
+                        },
+                        height: 450,
+                        width: $(window).width() * .8,
+                        vAxis:{
+                            format: '$#,###',
+                            textStyle: {
+                                fontSize: 14
+                            }
+                        },
+                        hAxis: {
+                            textStyle: {
+                                fontSize: 14
+                            }
+                        }
+                    };
+
+                    programs_chart = new google.charts.Bar(document.getElementById('program-overview'));
+
+                    programs_chart.draw(programTotalData, google.charts.Bar.convertOptions(options));
+                    google.visualization.events.addListener(programs_chart, 'select', selectHandler);
+
+                    function selectHandler(e) {
+
+                        var selection = programs_chart.getSelection();
+
+                        if (selection.length > 0){
+                            var programName = programTotalData.getColumnLabel(selection[0].column);
+                            programs_chart.setSelection([]);
+                            openProgramTab(programName);
+                        }
+
+                    } //end select handler
+
+                };
+
+                $(window).resize(function() {
+                    drawChart();
+                });
+
+                var dataByProgram = [];
+                var programSpecificData = [];
+
+                // TODO: get dynamically from Years table (or set in config)
+                var supportedYears = [
+                    2012,
+                    2013,
+                    2014,
+                    2015,
+                    2016,
+                    2017
+                ];
+
+                var yearToDisplay = {
+                    2012: "2012-13",
+                    2013: "2013-14",
+                    2014: "2014-15",
+                    2015: "2015-16",
+                    2016: "2016-17",
+                    2017: "2017-18"
+                };
+
+                var yearToRowMapping = {};
+                var tableHeader = ['School Years'];
+
+                // Dynamically create Google Visualization DataTable rows based on # of years
+                for(var i = 0; i < supportedYears.length; i++){
+                    var year = supportedYears[i];
+                    var yearKey = year.toString();
+                    yearToRowMapping[yearKey] = _.indexOf(supportedYears,year,true);
+                    dataByProgram.push([yearToDisplay[year]]);
+                }
+
+                var overviewQuery = "SELECT  prog.short as program,a.year, COALESCE(SUM(ytd_actual), 0) as ytd_actual FROM programs prog, measure_g_actuals a WHERE prog.id = a.program_id GROUP BY program, a.year ORDER BY program, a.year";
+
+                $.getJSON('https://jbaldo.cartodb.com/api/v2/sql/?q='+overviewQuery, function(data) {
+
+                    var groupedByProgram = _.groupBy(data.rows, 'program');
+
+                    _.each(groupedByProgram, function(yearsOfSpending, program){
+
+                        // Dynamically create a row for every program
+                        tableHeader.push(program);
+
+                        // Instead of complex SQL joining,
+                        // start with 0 value for each program and replace with spending if it exists
+                        for (var i = 0; i < dataByProgram.length; i++) {
+                            dataByProgram[i].push(0);
+                        }
+
+                        _.each(yearsOfSpending, function(year){
+                            var row = yearToRowMapping[year.year];
+                            var column = tableHeader.length - 1;
+                            dataByProgram[row][column] = year.ytd_actual;
+                        });
+
+                    });
+
+                    //Add the table header
+                    dataByProgram.unshift(tableHeader);
+
+                }).then(function(){
+                    google.charts.setOnLoadCallback(drawChart);
+                        var dataByObjects = [];
+
+                        var allProgramsQuery = "SELECT p.short as program, o.short as object, SUM(ytd_actual) total, a.year " +
+                            "FROM measure_g_actuals a, programs p, objects o " +
+                            "WHERE a.object_id = o.id " +
+                            "AND a.program_id = p.id " +
+                            "GROUP BY o.short, p.short, a.year " +
+                            "HAVING SUM(ytd_actual) > 1000 " +
+                            "ORDER BY program, total";
+
+                        var yearToColumnMapping = {};
+                        var tableHeader = ['Expense Type'];
+
+                        // Dynamically create Google Visualization DataTable columns based on # of years
+                        for(var i = 0; i < supportedYears.length; i++){
+                            var year = supportedYears[i];
+                            var yearKey= year.toString();
+                            yearToColumnMapping[yearKey] = _.indexOf(supportedYears,year,true);
+                            tableHeader.push(yearToDisplay[yearKey]);
+                        }
+
+                        $.getJSON('https://jbaldo.cartodb.com/api/v2/sql/?q='+allProgramsQuery, function(data) {
+
+                            _.each(_.groupBy(data.rows, 'program'), function(byProgram, program){
+
+                                var dataByObjects = [];
+
+                                _.each(_.groupBy(byProgram, 'object'),function (yearsOfSpending,object) {
+
+                                    var objectSpendingByYear = [object];
+
+                                    // Instead of complex SQL joining,
+                                    // start with 0 value for each year and replace with spending if it exists
+                                    for (var i = 0; i < supportedYears.length; i++) {
+                                        objectSpendingByYear.push(0);
+                                    }
+
+                                    _.each(yearsOfSpending, function(year){
+                                        var column = yearToColumnMapping[year.year] + 1;
+                                        objectSpendingByYear[column] = year.total;
+                                    });
+
+                                    dataByObjects.push(objectSpendingByYear);
+
+                                });
+
+                                //Add a header
+                                dataByObjects.unshift(tableHeader);
+
+                                // All object spednign for this program is processed
+                                // add entry for program
+                                programSpecificData[program] = dataByObjects;
+
+                            });
+
+                            //get selected program from URL and open it
+                            var selectedProgram = window.location.hash.slice(1);
+
+                            if(selectedProgram in supportedPrograms) {
+                                openProgramTab(supportedPrograms[selectedProgram]);
+                            }
+
+                        });
+
+                        var spendingOverTimeQuery = "SELECT SUM(a.ytd_actual), p.short as program, a.year FROM measure_g_actuals a, programs p " + "WHERE a.program_id = p.id "
+                            + "GROUP BY(a.program_id, a.year, p.short)";
+
+                        $.getJSON('https://jbaldo.cartodb.com/api/v2/sql/?q='+spendingOverTimeQuery, function(data) {
+
+                            spendingOverTimeData = _.groupBy(data.rows, 'program');
+
+                            _.each(spendingOverTimeData, function(yearsOfData, program){
+                                var formatted = [];
+                                yearsOfData = _.groupBy(yearsOfData, 'year');
+
+                                // Set a sum of 0 for each year
+                                for (var i = supportedYears.length - 1; i >= 0; i--) {
+                                    var year = supportedYears[i];
+                                    var displayYear = yearToDisplay[year];
+                                    if(year in yearsOfData){
+                                        formatted.push([displayYear,yearsOfData[year][0].sum]);
+                                    } else {
+                                        formatted.push([displayYear,0]);
+                                    }
+                                }
+
+                                formatted.unshift(['School Years','Amount Spent']);
+                                spendingOverTimeData[program] = formatted;
+
+                            });
+
+                        }).then(function (){
+                            //get selected program from URL and open it
+                            var selectedProgram = window.location.hash.slice(1);
+
+                            if(selectedProgram in supportedPrograms) {
+                                updateSpendingOverTimeChart(supportedPrograms[selectedProgram]);
+                            }
+                        });
+                });
+
+                $('#all-programs-tab').click(function() {
+                    window.location.hash = "";
+                });
+
+                $('#objects-tab').click(function(){
+                    window.location.hash = $(this).data('program-key');
+                });
+
+                var supportedPrograms = {
+                    'art': 'ART',
+                    'basic-school-support': 'BASIC SCHOOL SUPPORT',
+                    'class-size-reduction': "CLASS SIZE REDUCTION",
+                    'elementary-intervention': "COVERED ELEM INTERVENTION PDS",
+                    'hr-recruitment': "HR Recruitment",
+                    'middle-school-electives': "MIDDLE SCHOOL ELECTIVES",
+                    'music': "MUSIC",
+                    'nclb-hqt-compliance': "NCLB HQT COMPLIANCE",
+                    'arts-summer-school': "Oakland Fine Arts Summer Schl",
+                    'oratorical-fest': "ORATORICAL FEST/PERFORMANCES",
+                    'oth-programs': "OTH PROGRAMS / LOCAL GOALS",
+                    'libraries':"SCHOOL LIBRARIES"
+                }
+
+
+            });
+        </script>
+
+        <!--Google analytics snippet -->
+          <script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+            ga('create', 'UA-35908939-11', 'auto');
+            ga('send', 'pageview');
+
+          </script>
+    </head>
+    <body>
+
+        <!-- Wrap all page content here -->
+        <div id="wrap">
+
+                        <!-- Fixed navbar -->
+            <div class="navbar navbar-default navbar-fixed-top">
+                <div class="container">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse-target" aria-expanded="false">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="index.html"><strong>Track G - Oakland's Measure G</strong></a>
+                    </div>
+                    <div class="collapse navbar-collapse" id="navbar-collapse-target">
+                        <ul class="nav navbar-nav">
+                            <li class=""><a href="index.html">About</a></li>
+                            <li class=""><a href="map.html">By Location</a></li>
+                            <li class="active"><a href="programs.html#">By Program</a></li>
+                            <li class=""><a href="chart.html">By School</a></li>
+                        </ul>
+                        <ul class="nav navbar-nav navbar-right social">
+                            <li>
+                              <a class="twitter" href="https://twitter.com/intent/tweet?hashtags=OAKEDU&original_referer=trackg.org&ref_src=twsrc%5Etfw&text=Explore%20how%20Measure%20G%20funds%20are%20spent%20in%20%23Oakland%20Schools%20at%20trackg.org!&tw_p=tweetbutton&url=&via=OpenOakland" target="_blank">
+                              <i class="fa fa-twitter fa-lg"></i>
+                              </a>
+                            </li>
+                            <li>
+                                <a class="facebook" href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Ftrackg.org" target="_blank" class="fbhover"><i class="fa fa-facebook fa-lg"></i></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+          <!-- Begin page content -->
+          <div class="center-container">
+
+            <div class="center-row">
+                <div class="container">
+                    <div id="chart_div"></div>
+                    <div class="row">
+                        <div class="mdl-tabs mdl-js-tabs mdl-js-ripple-effect" id="tabs">
+                            <div class="mdl-tabs__tab-bar">
+                                <a href="#all-programs-panel" class="mdl-tabs__tab is-active all-programs-data" id="all-programs-tab">All Programs</a>
+                                <a href="#objects-panel" class="mdl-tabs__tab object-level-data" id="objects-tab" style="display:none"></a>
+                            </div>
+                            <div class="mdl-tabs__panel is-active all-programs-data" id="all-programs-panel">
+                                <h4>Click a program name for more information</h4>
+                                <div id="program-overview"></div>
+                            </div>
+                            <div class="mdl-tabs__panel object-level-data" id="objects-panel" style="display: none">
+                                <div class="row section">
+                                    <div class="col-md-8" id="description">
+                                        <h4 class="section-header">Program Overview</h4>
+                                         <div id="art" style="display:none">Arts education is a powerful medium through which students develop social skills, engage with their community and enhance their creative capital and skills for expression often relied on for successful careers. Over the 2015-16 school year, Measure G funds for the arts were spent primarily on consultants. Community artists are sometimes hired as consultants to support arts education in the district.</div>
+
+<div id="basic-school-support" style="display:none">Basic School Support funding is allocated directly to schools and almost exclusively spent on teacher salaries and benefits. It supports a few key Measure G ballot language initiatives. However, the Measure G Committee recommended in 2015-16 that OUSD reduce the amount of Measure G funds assigned to the Basic School Support category so that the designation of Measure G funds better aligned with the ballot language. The Committee and OUSD staff will be working to better designate these funds in the 2016-17 school year.</div>
+
+<div id="class-size-reduction" style="display:none">Measure G is used to fund additional teacher positions at the elementary level in order to reduce class sizes. With Measure G funds, average class size across all K-3 classrooms was 15.4 students in 2015-16. Without Measure G funds, the average class size would have risen just slightly, by only 0.63 students per class, to an average of 16.03 students. A nearly $5 million investment of Measure G funds reduced class sizes by less than one (1) student in 2015-16.</div>
+x
+<div id="elementary-intervention" style="display:none">The Covered Elementary Intervention funding is allocated directly to school sites in order to give classroom teachers time to plan, assess student work, and collaborate with peer teachers through the use of prep periods.</div>
+
+<div id="hr-recruitment" style="display:none">Measure G funds support approximately $1 million of the approximately $6 million Talent Division budget. $827,000 of Measure G revenue funded 8.2 FTE across 11 different positions in the Talent Division, which had a total of 49 FTE. Measure G funded Talent Division positions focus on recruitment and retention activities.</div>
+
+<div id="middle-school-electives" style="display:none">Measure G funds were spent on middle school electives in the 2012-13 and 2013-14 school years. Since then, no Measure G funds were spent on middle school electives.</div>
+
+<div id="music" style="display:none">Funding in music allows the District to provide access to quality music instruction, to build school cultures that support learning through music and to prepare teachers to teach in and through music. This funding supports teachers on special assignments or consultants to provide the District’s students with benefit of having a creative expert.</div>
+
+<div id="nclb-hqt-compliance" style="display:none">A description of this program is unavailable.</div>
+
+<div id="arts-summer-school" style="display:none">OFASS is a collaborative program funded and operated through OUSD and community partners. Through Measure G’s support, elementary school aged OUSD students can enroll in and attend this integrative arts summer program.The summer program runs for full days for 4 weeks during the summer. Students are grouped by grade level and/or experience and are assigned classes in several areas of the arts. For example, class offerings include art – set design, drama, music – voice, video production, and dance. The summer program culminates on a staged performance featuring all students’ participants. Measure G funding covers the cost of stipends and salaries and benefits for teachers and consultants.</div>
+
+<div id="oratorical-fest" style="display:none">Funding is provided to support numerous community events. Funding is allocated in part for staff salary and benefits to support after-hours work. The District also funded some consultants to provide expertise and support to staff surrounding the major events.<br>A large portion of this funding covers the costs of supplies required to plan and host large community events such as rentals, refreshments and other general supplies. Events include the Oratorical Fest and our annual spelling bee contest.</div>
+
+<div id="oth-programs" style="display:none"></div>
+
+<div id="libraries" style="display:none">Measure G revenue has been the sole Oakland Unified School District source of funding for libraries at school sites. If Measure G funds are not provided to a school site for a library, the school must raise its own funds or seek volunteers to staff its library. Measure G funds the district librarian position at the central level.</div>
+
+                                    </div>
+                                </div>
+                                <div class="row section">
+                                    <div class="col-md-8">
+                                        <h4 class="section-header">How has spending on this program changed over the years?</h4>
+                                        <div id="spending_over_time"></div>
+                                    </div>
+                                </div>
+                                <div class="row section">
+                                    <div class="col-md-12">
+                                        <h4 class="section-header">How is money spent on this program across the district?</h4>
+                                        <div id="object_chart"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+
+          </div>
+
+        </div> <!-- end wrap -->
+
+                <script>
+            // Include the UserVoice JavaScript SDK (only needed once on a page)
+            UserVoice=window.UserVoice||[];(function(){var uv=document.createElement('script');uv.type='text/javascript';uv.async=true;uv.src='//widget.uservoice.com/fE7XpxXMOWc2yipGiIhow.js';var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(uv,s)})();
+
+            //
+            // UserVoice Javascript SDK developer documentation:
+            // https://www.uservoice.com/o/javascript-sdk
+            //
+
+            // Set colors
+            UserVoice.push(['set', {
+              accent_color: '#6aba2e',
+              trigger_color: 'white',
+              trigger_background_color: '#6aba2e',
+              forum_id: '347124',
+              strings: {
+                post_suggestion_title: 'Post an idea to improve this page',
+                post_suggestion_body: 'Publica una idea para mejorar esta página. \n 张贴想法，以改善此页面',
+                suggestion_category_label: 'Which page are you on?'
+                }
+            }]);
+
+            // Add default trigger to the bottom-right corner of the window:
+            UserVoice.push(['addTrigger', {mode: 'feedback', trigger_position: 'bottom-right' }]);
+
+            // Autoprompt for Satisfaction and SmartVote (only displayed under certain conditions)
+            UserVoice.push(['autoprompt', {}]);
+        </script>
+    </body>
+</html>
