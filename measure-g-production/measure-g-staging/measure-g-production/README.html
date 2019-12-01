@@ -7,20 +7,24 @@
 </ul>
 <p>Note: Node comes with npm which is a package manager for Node. You can use the instructions above to update to the latest version and verify that it&#39;s installed.</p>
 <h3>Install &amp; Run Harp</h3><p>TrackG is using a minimal server framework called <a href="http://harpjs.com/">Harp</a> for EJS templating and sass stylesheets. Currently, trackg.org is just compiled static HTML and not a Harp server. But that may change and Harp simplifies the development process.</p>
-<pre><code>npm install harp -g</code></pre><p>To start the Harp server, git clone this directory and then run:</p>
-<pre><code>harp server</code></pre><p>Now you can hit the server at <code>localhost:9000</code> (by default). Any changes you make in source will automatically compile on refresh.</p>
+<pre><code>npm install harp -g
+</code></pre><p>To start the Harp server, git clone this directory and then run:</p>
+<pre><code>harp server
+</code></pre><p>Now you can hit the server at <code>localhost:9000</code> (by default). Any changes you make in source will automatically compile on refresh.</p>
 <h2>Deployment</h2><p>Since we are using GitHub pages for hosting, pushing up changes is a little tricky. Shell scripts are currently being used to make the process easier for you.</p>
 <h3>Setup</h3><p>If it&#39;s the first time you are deploying to your machine, get write access to the <a href="https://github.com/openoakland/measure-g-staging">measure-g-staging</a> repository.</p>
 <p>Then run:</p>
-<pre><code>bash ./deploy_setup.sh</code></pre><p>See the script for comments on what goes on in that script.</p>
+<pre><code>bash ./deploy_setup.sh
+</code></pre><p>See the script for comments on what goes on in that script.</p>
 <h3>Staging</h3><p>Once you have that setup process complete, you can run:</p>
-<pre><code>bash ./deploy_staging.sh</code></pre><p>to see your changes hosted at <a href="http://staging.trackg.org">http://staging.trackg.org</a></p>
+<pre><code>bash ./deploy_staging.sh
+</code></pre><p>to see your changes hosted at <a href="http://staging.trackg.org">http://staging.trackg.org</a></p>
 <h2>Data Maintenence</h2><h3>Adding Enrollment Data</h3><p>Our enrollment source has been the <a href="https://nces.ed.gov/ccd/pubschuniv.asp">US Dept of Ed National Center for Education Statistics</a> and the <a href="https://www.cde.ca.gov/ds/sd/sd/filesenr.asp">CA Dept of Ed</a>. These instructions are for the CA Dept of Ed.</p>
 <ol>
 <li><a href="https://www.cde.ca.gov/ds/sd/sd/filesenr.asp">Download the enrollment data</a> for the year you would like to add</li>
 </ol>
 <p><em>Carto Postgres Hosting (jbaldo.carto.com)</em></p>
-<ol start="2">
+<ol>
 <li>To conserve file size, delete all rows where district != &#39;Oakland Unified&#39; (Excel can do this pretty easily)</li>
 <li>Save as csv (original sorce is text flat file)</li>
 <li>Upload to the carto account as a new dataset</li>
@@ -39,4 +43,4 @@
 <li>Update the <code>supported_years</code> and <code>yearsToDisplay</code> arrays in <code>programs.ejs</code> and <code>school.ejs</code> to include the year you just added. (Unfortunately, it may break without this adjustment).</li>
 <li>Update <code>latestExpenditureDataYear</code> in <code>harp.json</code> to the year you have just added and add another element to to the <code>year-select</code> element in <code>map.ejs</code>.</li>
 </ol>
-<p><a href="https://github.com/openoakland/measure-g/pull/67">Example Change</a></p>
+<p><a href="https://github.com/openoakland/measure-g/commit/7de5b408a0b319c3f9b9814e93c637a66b00de5a">Example Commit</a></p>

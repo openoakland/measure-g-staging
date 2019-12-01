@@ -1,5 +1,5 @@
 # move into dir created when running deploy_setup.sh
-cd measure-g-production
+cd measure-g-staging
 
 # delete a previously created staging GitHub pages branch on GitHub
 git push origin :gh-pages
@@ -11,10 +11,10 @@ git rm -rf .
 harp compile ../ ./
 
 # create a CNAME record so the URL works correctly
-echo 'trackg.org' > 'CNAME'
+# echo 'staging.trackg.org' > 'CNAME'
 
 # add and commit all the files on the gh-pages branch, push it up to GitHub for hosting
 git add -A
 git reset .htaccess
-git commit -m "$(date +%m-%d-%Y_%H:%M:%S) production deploy"
+git commit -m "$(date +%m-%d-%Y_%H:%M:%S) staging deploy"
 git push origin gh-pages

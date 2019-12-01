@@ -28,7 +28,7 @@
         <script type="text/javascript">
 
             var getSelectedYear = function() {
-                return 2017;
+                return 2016;
             };
 
             // Capitalizes first letter
@@ -45,7 +45,7 @@
             google.charts.load('current', {'packages':['table']});
 
             // this is a global variable in _harp.json
-            var latestEnrollmentYear = 2017;
+            var latestEnrollmentYear = 2016;
 
             var sql = "SELECT spend.*, e.total_enrollment, " +
                 "round((spend.ytd_actual / e.total_enrollment)::numeric, 2) as per_student " +
@@ -55,7 +55,7 @@
                 "s.site_type, " +
                 "s.ousd_site, " +
                 "MIN(s.ncessch) ncessch " +
-                "FROM measure_g_actuals mg, measure_g_schools_lat_long s " +
+                "FROM <%= expenditureDataTable %> mg, measure_g_schools_lat_long s " +
                 "WHERE " +
                 "mg.site = s.ousd_site " +
                 "AND mg.year = " + getSelectedYear() + " " +
